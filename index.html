@@ -1,0 +1,1603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nova X Coin Admin</title>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <style>
+    :root{
+      --bg:#090e1c;
+      --panel:#121c2d;
+      --line:rgba(255,255,255,0.09);
+      --text:#f4f7ff;
+      --muted:#8b95af;
+      --purple:#8d75ff;
+      --green:#32d29b;
+      --red:#ff6474;
+      --amber:#f3ba2f;
+      --cyan:#00b8ff;
+      --cyan-deep:#0066ff;
+    }
+    *{box-sizing:border-box}
+    [hidden]{display:none !important}
+    html{scroll-behavior:smooth}
+    html,body{
+      margin:0; min-height:100%; overflow-x:hidden;
+      background:radial-gradient(circle at top right, rgba(141,117,255,0.16), transparent 32%), var(--bg);
+      color:var(--text); font-family:Inter, Segoe UI, Arial, sans-serif;
+    }
+    button,input,select{font:inherit}
+    input,select{font-size:16px}
+    button{touch-action:manipulation}
+
+    /* ================= WELCOME PAGE STYLES ================= */
+    .welcome-page{
+      position:relative;
+      min-height:100vh;
+      background:
+        radial-gradient(circle at 72% 18%, rgba(0, 184, 255, 0.16), transparent 36%),
+        radial-gradient(circle at 20% 52%, rgba(0, 102, 255, 0.10), transparent 38%),
+        radial-gradient(circle at 82% 65%, rgba(0, 184, 255, 0.12), transparent 34%),
+        #030912;
+      color:#f4f8ff;
+      overflow:hidden;
+    }
+    .welcome-stars{
+      position:absolute; inset:0; pointer-events:none; opacity:0.55;
+      background-image:
+        radial-gradient(1.5px 1.5px at 14% 22%, rgba(160,230,255,0.8) 50%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 38% 12%, rgba(160,230,255,0.5) 50%, transparent 100%),
+        radial-gradient(2px 2px at 84% 34%, rgba(0,184,255,0.85) 50%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 16% 68%, rgba(255,255,255,0.75) 50%, transparent 100%),
+        radial-gradient(2px 2px at 28% 82%, rgba(0,184,255,0.8) 50%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 74% 88%, rgba(160,230,255,0.6) 50%, transparent 100%);
+    }
+    .w-container{
+      position:relative; z-index:2;
+      width:min(1160px, calc(100% - 32px));
+      margin:0 auto;
+    }
+
+    /* Navbar */
+    .w-nav{
+      display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px;
+      padding:22px 0;
+    }
+    .w-logo{
+      display:flex; align-items:center; gap:8px; text-decoration:none;
+      font-size:1.35rem; font-weight:800; letter-spacing:-0.03em; color:#fff;
+    }
+    .w-logo span{color:var(--cyan)}
+    .w-nav-links{
+      display:flex; align-items:center; gap:26px; flex-wrap:wrap;
+    }
+    .w-nav-links a{
+      color:#9cb0c9; text-decoration:none; font-size:0.88rem; font-weight:500;
+      transition:color .2s;
+    }
+    .w-nav-links a:hover{color:#fff}
+    .w-btn-cyan{
+      border:0; border-radius:999px; padding:11px 22px; font-weight:700; font-size:0.86rem;
+      color:#fff; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; justify-content:center;
+      background:linear-gradient(135deg, #13b8ff, #0066ff);
+      box-shadow:0 8px 24px rgba(0, 150, 255, 0.35);
+      transition:transform .15s, filter .15s;
+    }
+    .w-btn-cyan:hover{filter:brightness(1.1); transform:translateY(-1px)}
+    .w-btn-outline{
+      border:1px solid rgba(255,255,255,0.18); border-radius:999px; padding:11px 22px;
+      font-weight:600; font-size:0.86rem; color:#d8e6f8; cursor:pointer;
+      background:rgba(255,255,255,0.03); text-decoration:none; display:inline-flex; align-items:center; justify-content:center;
+      transition:border-color .2s, background .2s;
+    }
+    .w-btn-outline:hover{border-color:var(--cyan); background:rgba(0,184,255,0.08)}
+
+    .cyan-text{
+      background:linear-gradient(90deg, #35c8ff, #0088ff);
+      -webkit-background-clip:text;
+      background-clip:text;
+      color:transparent;
+    }
+
+    /* Hero */
+    .w-hero{
+      display:grid; grid-template-columns:1.05fr 0.95fr; align-items:center; gap:36px;
+      padding:46px 0 70px;
+    }
+    .w-hero h1{
+      margin:0 0 18px;
+      font-size:clamp(2.2rem, 4.6vw, 3.6rem);
+      line-height:1.08;
+      letter-spacing:-0.03em;
+      font-weight:800;
+    }
+    .w-hero p{
+      margin:0 0 28px;
+      color:#98adc6;
+      font-size:1rem;
+      line-height:1.65;
+      max-width:470px;
+    }
+    .w-hero-actions{
+      display:flex; flex-wrap:wrap; gap:12px;
+    }
+    .w-hero-art{
+      display:flex; justify-content:center; align-items:center;
+    }
+    .w-hero-art svg{
+      width:min(100%, 440px); height:auto;
+      filter:drop-shadow(0 0 28px rgba(0, 175, 255, 0.35));
+    }
+
+    /* Section Headings */
+    .w-section{
+      position:relative;
+      padding:64px 0;
+    }
+    .w-sec-head{
+      text-align:center;
+      margin-bottom:42px;
+    }
+    .w-sec-head h2{
+      margin:0 0 10px;
+      font-size:clamp(1.7rem, 3vw, 2.35rem);
+      letter-spacing:-0.02em;
+    }
+    .w-sec-head p{
+      margin:0 auto;
+      max-width:560px;
+      color:#8fa4bf;
+      font-size:0.92rem;
+      line-height:1.55;
+    }
+
+    /* 4 Feature Cards */
+    .w-cards-4{
+      display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:16px;
+    }
+    .w-feature-card{
+      padding:24px 20px;
+      border-radius:14px;
+      border:1px solid rgba(0, 184, 255, 0.16);
+      background:linear-gradient(180deg, rgba(10, 26, 46, 0.72), rgba(5, 13, 24, 0.88));
+      box-shadow:inset 0 1px 0 rgba(0, 184, 255, 0.15);
+      transition:transform .2s, border-color .2s;
+    }
+    .w-feature-card:hover{
+      transform:translateY(-3px);
+      border-color:rgba(0, 184, 255, 0.45);
+    }
+    .w-icon-box{
+      width:44px; height:44px; border-radius:10px;
+      display:grid; place-items:center; margin-bottom:18px;
+      background:rgba(0, 184, 255, 0.1);
+      border:1px solid rgba(0, 184, 255, 0.25);
+      color:var(--cyan);
+    }
+    .w-feature-card h3{
+      margin:0 0 8px; font-size:1.05rem; font-weight:700; color:#fff;
+    }
+    .w-feature-card p{
+      margin:0; font-size:0.84rem; line-height:1.5; color:#8ba1bd;
+    }
+
+    /* Decorative side globes */
+    .globe-decor{
+      position:absolute; width:210px; height:210px; border-radius:50%; pointer-events:none; opacity:0.22;
+      background:radial-gradient(circle at 35% 35%, rgba(0,184,255,0.6), rgba(0,102,255,0.08) 65%, transparent 72%);
+      border:1px dashed rgba(0,184,255,0.35);
+    }
+    .globe-right{right:-110px; top:10px}
+    .globe-left{left:-125px; bottom:20px}
+
+    /* Why Blockchain Matters */
+    .w-matters{
+      display:grid; grid-template-columns:0.95fr 1.05fr; align-items:center; gap:40px;
+    }
+    .w-matters h2{
+      margin:0 0 14px; font-size:clamp(1.7rem, 3vw, 2.3rem); letter-spacing:-0.02em;
+    }
+    .w-matters p{
+      margin:0 0 24px; color:#92a7c1; font-size:0.94rem; line-height:1.7;
+    }
+    .w-matters-art svg{
+      width:100%; max-width:470px; height:auto; display:block; margin:0 auto;
+      filter:drop-shadow(0 0 24px rgba(0, 175, 255, 0.28));
+    }
+
+    /* Pricing Plans */
+    .w-pricing-grid{
+      display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:20px; align-items:stretch;
+    }
+    .w-price-card{
+      position:relative; overflow:hidden;
+      padding:28px 24px;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,0.1);
+      background:linear-gradient(180deg, rgba(12, 26, 44, 0.8), rgba(6, 14, 26, 0.92));
+      display:flex; flex-direction:column;
+    }
+    .w-price-card.popular{
+      border-color:rgba(0, 184, 255, 0.55);
+      background:linear-gradient(180deg, rgba(13, 34, 58, 0.9), rgba(6, 16, 30, 0.96));
+      box-shadow:0 16px 40px rgba(0, 150, 255, 0.16);
+      transform:translateY(-6px);
+    }
+    .w-ribbon{
+      position:absolute; top:18px; right:-34px; transform:rotate(45deg);
+      background:linear-gradient(90deg, #13b8ff, #0077ff);
+      color:#fff; font-size:0.68rem; font-weight:800; padding:5px 38px;
+      letter-spacing:0.03em; box-shadow:0 4px 12px rgba(0,0,0,0.35);
+    }
+    .w-plan-tag{
+      font-size:0.86rem; font-weight:700; color:#8fd8ff; margin-bottom:10px;
+    }
+    .w-price{
+      font-size:2.3rem; font-weight:800; letter-spacing:-0.03em; margin-bottom:6px;
+    }
+    .w-price span{
+      font-size:0.88rem; font-weight:500; color:#8ba1bd;
+    }
+    .w-plan-desc{
+      font-size:0.82rem; color:#8ea4bf; margin:0 0 20px; min-height:36px;
+    }
+    .w-plan-feat-title{
+      font-size:0.8rem; font-weight:700; color:#dce9f8; margin-bottom:10px;
+    }
+    .w-plan-list{
+      list-style:none; padding:0; margin:0 0 24px; display:flex; flex-direction:column; gap:10px; flex:1;
+    }
+    .w-plan-list li{
+      font-size:0.83rem; color:#9eb4ce; display:flex; align-items:center; gap:9px;
+    }
+    .w-plan-list li::before{
+      content:"✓"; display:inline-grid; place-items:center;
+      width:18px; height:18px; border-radius:50%; flex-shrink:0;
+      font-size:0.7rem; font-weight:800;
+      background:rgba(0, 184, 255, 0.14); color:var(--cyan);
+      border:1px solid rgba(0, 184, 255, 0.35);
+    }
+
+    .w-footer{
+      border-top:1px solid rgba(255,255,255,0.07);
+      padding:26px 0 36px;
+      text-align:center;
+      color:#6f84a0;
+      font-size:0.82rem;
+    }
+
+    /* ================= ADMIN LOGIN MODAL & PANEL ================= */
+    .login-gate{
+      position:fixed; inset:0; z-index:100; display:grid; place-items:center; padding:18px;
+      background:rgba(3, 9, 18, 0.82);
+      backdrop-filter:blur(8px);
+    }
+    .login-card{
+      position:relative;
+      width:min(100%, 390px); padding:28px; border-radius:22px;
+      border:1px solid rgba(0, 184, 255, 0.25); background:var(--panel);
+      box-shadow:0 24px 60px rgba(0,0,0,0.6);
+    }
+    .login-close{
+      position:absolute; top:14px; right:14px;
+      width:32px; height:32px; border-radius:50%; border:1px solid var(--line);
+      background:rgba(255,255,255,0.05); color:var(--muted); cursor:pointer;
+      font-size:1.1rem; display:grid; place-items:center;
+    }
+    .login-close:hover{color:#fff; border-color:rgba(255,255,255,0.25)}
+    .login-card h1{margin:0 0 6px; font-size:1.55rem; letter-spacing:-0.04em}
+    .login-card p{margin:0 0 18px; color:var(--muted); font-size:0.86rem}
+    .field{margin-bottom:14px}
+    .field label{display:block; margin-bottom:6px; font-size:0.78rem; color:var(--muted)}
+    .field input,.field select{
+      width:100%; padding:11px 13px; border-radius:11px; border:1px solid var(--line);
+      background:rgba(255,255,255,0.03); color:var(--text); outline:none;
+    }
+    .field select{background:#162238}
+
+    .btn{
+      border:0; border-radius:11px; padding:10px 15px; font-weight:700; font-size:0.84rem;
+      cursor:pointer; color:#fff; background:linear-gradient(135deg,#8c79ff,#684ae5);
+    }
+    .btn:hover{filter:brightness(1.07)}
+    .btn.full{width:100%; padding:13px 16px}
+    .btn.green{background:linear-gradient(135deg,#32d29b,#1ca978); color:#052217}
+    .btn.red{background:linear-gradient(135deg,#ff6474,#d93b4d)}
+    .btn.soft{background:rgba(255,255,255,0.07); border:1px solid var(--line)}
+    .btn.sm{padding:7px 11px; font-size:0.76rem; border-radius:9px}
+
+    .shell{
+      width:min(1260px, calc(100% - 24px)); margin:0 auto; padding:20px 0 50px;
+    }
+    .topbar{
+      display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;
+      margin-bottom:20px; padding-bottom:16px; border-bottom:1px solid var(--line);
+    }
+    .brand{display:flex; align-items:center; gap:10px; font-weight:800; font-size:1.2rem}
+    .badge{
+      width:36px; height:36px; border-radius:11px; display:grid; place-items:center;
+      background:linear-gradient(135deg,#b19aff,#6755ea);
+    }
+    .conn-pill{
+      padding:6px 12px; border-radius:999px; font-size:0.74rem; font-weight:700;
+      border:1px solid rgba(50,210,155,0.3); background:rgba(50,210,155,0.1); color:var(--green);
+    }
+    .conn-pill.local{
+      border-color:rgba(243,186,47,0.35); background:rgba(243,186,47,0.12); color:var(--amber);
+    }
+    .conn-pill.err{
+      border-color:rgba(255,100,116,0.35); background:rgba(255,100,116,0.12); color:var(--red);
+    }
+
+    .stats-grid{
+      display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:14px; margin-bottom:20px;
+    }
+    .stat-card{
+      padding:18px; border-radius:18px; border:1px solid var(--line);
+      background:linear-gradient(145deg, rgba(18,27,46,0.96), rgba(11,15,31,0.96));
+    }
+    .stat-card span{display:block; color:var(--muted); font-size:0.76rem; margin-bottom:6px}
+    .stat-card strong{font-size:1.7rem; letter-spacing:-0.04em}
+
+    .tabs{
+      display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px;
+    }
+    .tab-btn{
+      padding:10px 16px; border-radius:12px; border:1px solid var(--line);
+      background:rgba(255,255,255,0.03); color:var(--muted); font-weight:700; font-size:0.86rem; cursor:pointer;
+    }
+    .tab-btn.active{
+      background:linear-gradient(135deg,#8c79ff,#684ae5); border-color:transparent; color:#fff;
+    }
+
+    .panel{
+      padding:20px; border-radius:20px; border:1px solid var(--line);
+      background:linear-gradient(145deg, rgba(18,27,46,0.96), rgba(11,15,31,0.96));
+      margin-bottom:16px;
+    }
+    .panel-head{
+      display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;
+    }
+    .panel-head h2{margin:0; font-size:1.15rem}
+
+    .quick-bal-box{
+      display:grid; grid-template-columns:1.3fr 0.9fr auto; gap:10px; align-items:end;
+      padding:16px; border-radius:14px; border:1px solid var(--line);
+      background:rgba(255,255,255,0.02); margin-bottom:18px;
+    }
+    .quick-bal-box .field{margin:0}
+
+    .table-wrap{overflow-x:auto}
+    table{width:100%; border-collapse:collapse; font-size:0.86rem; min-width:680px}
+    th,td{padding:12px 10px; border-bottom:1px solid var(--line); text-align:left; vertical-align:middle}
+    th{color:var(--muted); font-size:0.74rem; text-transform:uppercase; letter-spacing:0.06em}
+    .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:0.78rem; word-break:break-all}
+
+    .pill{
+      display:inline-block; padding:3px 9px; border-radius:999px; font-size:0.72rem; font-weight:700;
+    }
+    .pill.pending{background:rgba(243,186,47,0.16); color:var(--amber)}
+    .pill.success,.pill.active,.pill.win{background:rgba(50,210,155,0.16); color:var(--green)}
+    .pill.rejected,.pill.blocked,.pill.loss{background:rgba(255,100,116,0.16); color:var(--red)}
+
+    .actions-row{display:flex; gap:6px; flex-wrap:wrap; align-items:center}
+    .inline-input{
+      width:95px; padding:6px 8px; border-radius:8px; border:1px solid var(--line);
+      background:rgba(255,255,255,0.04); color:var(--text); font-size:16px;
+    }
+
+    .grid-2{display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:16px}
+    .tier-grid{display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); gap:10px}
+
+    .support-layout{
+      display:grid; grid-template-columns:280px minmax(0, 1fr); gap:16px; min-height:460px;
+    }
+    .chat-list{
+      border:1px solid var(--line); border-radius:14px; overflow-y:auto; max-height:460px;
+      background:rgba(255,255,255,0.02);
+    }
+    .chat-thread-btn{
+      width:100%; text-align:left; padding:12px 14px; border:0; border-bottom:1px solid var(--line);
+      background:transparent; color:var(--text); cursor:pointer; display:block;
+    }
+    .chat-thread-btn:hover{background:rgba(255,255,255,0.04)}
+    .chat-thread-btn.active{background:rgba(141,117,255,0.16)}
+    .chat-thread-btn small{display:block; color:var(--muted); margin-top:3px; font-size:0.74rem}
+
+    .chat-box{
+      display:flex; flex-direction:column; border:1px solid var(--line); border-radius:14px;
+      background:rgba(11,16,32,0.45); height:460px; overflow:hidden;
+    }
+    .chat-messages{
+      flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:10px;
+    }
+    .msg{max-width:78%; padding:10px 13px; border-radius:14px; font-size:0.86rem; line-height:1.45}
+    .msg.user{align-self:flex-start; background:rgba(255,255,255,0.08)}
+    .msg.agent{align-self:flex-end; background:linear-gradient(135deg,#8c79ff,#684ae5)}
+    .msg img{
+      display:block; max-width:220px; max-height:180px; border-radius:10px; margin-bottom:6px; cursor:zoom-in;
+    }
+    .msg small{display:block; opacity:0.7; font-size:0.68rem; margin-top:4px}
+    .chat-input-row{
+      display:flex; gap:8px; padding:10px; border-top:1px solid var(--line); background:rgba(255,255,255,0.02);
+    }
+    .chat-input-row input[type="text"]{
+      flex:1; min-width:0; padding:10px 12px; border-radius:10px; border:1px solid var(--line);
+      background:rgba(255,255,255,0.04); color:var(--text); outline:none;
+    }
+
+    .lightbox{
+      position:fixed; inset:0; z-index:200; display:grid; place-items:center; padding:20px;
+      background:rgba(0,0,0,0.88);
+    }
+    .lightbox img{max-width:92vw; max-height:85vh; border-radius:14px}
+
+    @media (max-width:960px){
+      .w-hero,.w-matters,.w-pricing-grid{grid-template-columns:1fr}
+      .w-cards-4{grid-template-columns:repeat(2, minmax(0, 1fr))}
+      .w-price-card.popular{transform:none}
+    }
+    @media (max-width:860px){
+      .stats-grid,.grid-2,.support-layout,.quick-bal-box{grid-template-columns:1fr}
+      .tier-grid{grid-template-columns:repeat(2, minmax(0, 1fr))}
+    }
+    @media (max-width:560px){
+      .w-cards-4{grid-template-columns:1fr}
+      .w-nav-links{display:none}
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ================= WELCOME PAGE ================= -->
+  <div class="welcome-page" id="welcomePage">
+    <div class="welcome-stars"></div>
+
+    <div class="w-container">
+      <nav class="w-nav">
+        <a href="#home" class="w-logo">Nova X Coin <span>Admin</span></a>
+        <div class="w-nav-links">
+          <a href="#home">Home</a>
+          <a href="#whyBlockchain">Why Blockchain</a>
+          <a href="#pricingSection">Pricing</a>
+          <a href="#howItWorks">How It Works</a>
+        </div>
+        <button class="w-btn-cyan" type="button" data-open-login>Admin Login</button>
+      </nav>
+
+      <!-- Hero Section -->
+      <section class="w-hero" id="home">
+        <div>
+          <h1>Unleashing the Power<br>of <span class="cyan-text">Blockchain</span></h1>
+          <p>Transforming industries with secure, decentralized, and transparent technology.</p>
+          <div class="w-hero-actions">
+            <button class="w-btn-cyan" type="button" data-open-login>Get Started with Blockchain</button>
+            <a class="w-btn-outline" href="#howItWorks">Discover How It Works</a>
+          </div>
+        </div>
+
+        <div class="w-hero-art">
+          <svg viewBox="0 0 460 400" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+              <linearGradient id="cyberCyan" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#8be9ff"/>
+                <stop offset="50%" stop-color="#19b5ff"/>
+                <stop offset="100%" stop-color="#0055ff"/>
+              </linearGradient>
+              <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#66e0ff" stop-opacity="0.7"/>
+                <stop offset="100%" stop-color="#0066ff" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+
+            <circle cx="245" cy="140" r="110" fill="url(#coreGlow)"/>
+
+            <!-- Glowing Wireframe Chain Link -->
+            <g transform="translate(230 135) rotate(-38)">
+              <rect x="-110" y="-42" width="135" height="72" rx="36" stroke="url(#cyberCyan)" stroke-width="10" fill="rgba(0,184,255,0.08)"/>
+              <rect x="-110" y="-42" width="135" height="72" rx="36" stroke="#b6f3ff" stroke-width="1.5" stroke-dasharray="6 5"/>
+              <rect x="-25" y="-22" width="135" height="72" rx="36" stroke="url(#cyberCyan)" stroke-width="10" fill="rgba(0,184,255,0.08)"/>
+              <rect x="-25" y="-22" width="135" height="72" rx="36" stroke="#b6f3ff" stroke-width="1.5" stroke-dasharray="6 5"/>
+              <circle cx="-75" cy="-40" r="3" fill="#b6f3ff"/>
+              <circle cx="-18" cy="-40" r="3" fill="#b6f3ff"/>
+              <circle cx="48" cy="-20" r="3" fill="#b6f3ff"/>
+              <circle cx="96" cy="12" r="3" fill="#b6f3ff"/>
+              <circle cx="-40" cy="30" r="3" fill="#b6f3ff"/>
+              <circle cx="15" cy="48" r="3" fill="#b6f3ff"/>
+            </g>
+
+            <!-- Wireframe Digital Hand -->
+            <g transform="translate(80 230)">
+              <path d="M12 72 L95 45 L190 48 L285 32 C300 30 308 42 292 50 L215 74 L288 64 C302 62 308 75 292 81 L188 102 L105 98 L25 112 Z"
+                    fill="rgba(0, 150, 255, 0.14)" stroke="url(#cyberCyan)" stroke-width="2.2"/>
+              <path d="M40 78 L112 58 L195 62 L272 48 M65 92 L135 76 L212 80 L282 70 M95 45 L112 58 L105 98 M145 46 L160 66 L152 100 M190 48 L205 72 L188 102"
+                    stroke="#7ae5ff" stroke-width="1" opacity="0.7"/>
+              <circle cx="95" cy="45" r="2.8" fill="#aaf0ff"/>
+              <circle cx="145" cy="46" r="2.8" fill="#aaf0ff"/>
+              <circle cx="190" cy="48" r="2.8" fill="#aaf0ff"/>
+              <circle cx="292" cy="42" r="2.8" fill="#aaf0ff"/>
+              <circle cx="292" cy="72" r="2.8" fill="#aaf0ff"/>
+              <circle cx="188" cy="102" r="2.8" fill="#aaf0ff"/>
+            </g>
+          </svg>
+        </div>
+      </section>
+
+      <!-- Why Blockchain? -->
+      <section class="w-section" id="whyBlockchain">
+        <div class="globe-decor globe-right"></div>
+        <div class="w-sec-head">
+          <h2>Why <span class="cyan-text">Blockchain?</span></h2>
+          <p>Blockchain is redefining trust in the digital world. Here's why it matters:</p>
+        </div>
+
+        <div class="w-cards-4">
+          <div class="w-feature-card">
+            <div class="w-icon-box">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2L3 7v10l9 5 9-5V7l-9-5z"/><path d="M3 7l9 5 9-5"/><path d="M12 22V12"/>
+              </svg>
+            </div>
+            <h3>Decentralization</h3>
+            <p>No single entity controls the system.</p>
+          </div>
+
+          <div class="w-feature-card">
+            <div class="w-icon-box">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2l8 4v6c0 5.5-3.8 10-8 11-4.2-1-8-5.5-8-11V6l8-4z"/><rect x="9" y="10" width="6" height="5" rx="1"/>
+              </svg>
+            </div>
+            <h3>Security</h3>
+            <p>Encrypted and tamper proof data.</p>
+          </div>
+
+          <div class="w-feature-card">
+            <div class="w-icon-box">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/><path d="M8 11h6"/>
+              </svg>
+            </div>
+            <h3>Transparency</h3>
+            <p>Public, accountable transactions.</p>
+          </div>
+
+          <div class="w-feature-card">
+            <div class="w-icon-box">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+              </svg>
+            </div>
+            <h3>Efficiency</h3>
+            <p>Faster, cost effective processes.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Why Blockchain Matters -->
+      <section class="w-section" id="howItWorks">
+        <div class="globe-decor globe-left"></div>
+        <div class="w-matters">
+          <div>
+            <h2>Why Blockchain <span class="cyan-text">Matters</span></h2>
+            <p>
+              Blockchain is revolutionizing how we handle data, transactions, and trust.
+              By eliminating intermediaries and creating secure, transparent systems,
+              blockchain is laying the foundation for a more efficient and fair digital future.
+            </p>
+            <button class="w-btn-cyan" type="button" data-open-login>Read More</button>
+          </div>
+
+          <div class="w-matters-art">
+            <svg viewBox="0 0 480 340" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <polygon points="240,75 430,175 240,275 50,175" fill="rgba(0, 140, 255, 0.08)" stroke="rgba(0, 184, 255, 0.35)" stroke-width="1.5"/>
+              <path d="M120 155 L240 218 L360 155 M160 198 L240 240 L320 198 M240 120 L240 275" stroke="#22c8ff" stroke-width="1.8" opacity="0.65"/>
+
+              <path d="M72 145 C58 145 48 135 48 122 C48 110 57 100 69 99 C74 86 87 78 102 78 C122 78 138 93 139 112 C150 114 158 123 158 134 C158 146 148 155 135 155 L72 155 Z"
+                    fill="rgba(0, 175, 255, 0.25)" stroke="#5fe0ff" stroke-width="2"/>
+
+              <g transform="translate(215 100)">
+                <polygon points="25,0 55,16 25,32 -5,16" fill="#46d4ff"/>
+                <polygon points="-5,16 25,32 25,68 -5,52" fill="#007be5"/>
+                <polygon points="25,32 55,16 55,52 25,68" fill="#004eb3"/>
+              </g>
+              <g transform="translate(275 130)">
+                <polygon points="25,0 55,16 25,32 -5,16" fill="#5ce1ff"/>
+                <polygon points="-5,16 25,32 25,74 -5,58" fill="#0088ff"/>
+                <polygon points="25,32 55,16 55,58 25,74" fill="#0052cc"/>
+              </g>
+              <g transform="translate(170 135)">
+                <polygon points="25,0 55,16 25,32 -5,16" fill="#46d4ff"/>
+                <polygon points="-5,16 25,32 25,68 -5,52" fill="#007be5"/>
+                <polygon points="25,32 55,16 55,52 25,68" fill="#004eb3"/>
+              </g>
+              <g transform="translate(225 162)">
+                <polygon points="25,0 55,16 25,32 -5,16" fill="#70e7ff"/>
+                <polygon points="-5,16 25,32 25,72 -5,56" fill="#0095ff"/>
+                <polygon points="25,32 55,16 55,56 25,72" fill="#005ce6"/>
+              </g>
+
+              <polygon points="240,262 272,279 240,296 208,279" fill="rgba(0, 184, 255, 0.35)" stroke="#7ce6ff" stroke-width="1.5"/>
+              <circle cx="240" cy="279" r="5" fill="#bdf4ff"/>
+              <circle cx="105" cy="175" r="4" fill="#7ce6ff"/>
+              <circle cx="375" cy="175" r="4" fill="#7ce6ff"/>
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      <!-- Pricing Plans -->
+      <section class="w-section" id="pricingSection">
+        <div class="w-sec-head">
+          <h2>Pricing <span class="cyan-text">Plans</span></h2>
+          <p>Choose the plan that fits your needs and start exploring the power of blockchain today.</p>
+        </div>
+
+        <div class="w-pricing-grid">
+          <div class="w-price-card">
+            <div class="w-plan-tag">Beginner Plan</div>
+            <div class="w-price">$199<span>/month</span></div>
+            <p class="w-plan-desc">Individuals new to blockchain</p>
+            <div class="w-plan-feat-title">Features:</div>
+            <ul class="w-plan-list">
+              <li>Access to basic blockchain guides</li>
+              <li>Email support</li>
+              <li>Monthly market insights</li>
+            </ul>
+            <button class="w-btn-outline" type="button" data-open-login>Choose Beginner</button>
+          </div>
+
+          <div class="w-price-card popular">
+            <div class="w-ribbon">Most Popular</div>
+            <div class="w-plan-tag">Intermediate Plan</div>
+            <div class="w-price">$349<span>/month</span></div>
+            <p class="w-plan-desc">Users with some blockchain knowledge</p>
+            <div class="w-plan-feat-title">Features:</div>
+            <ul class="w-plan-list">
+              <li>Everything in Beginner</li>
+              <li>Access to advanced tutorials</li>
+              <li>Priority live support</li>
+              <li>Real-time market signals</li>
+            </ul>
+            <button class="w-btn-cyan" type="button" data-open-login>Choose Intermediate</button>
+          </div>
+
+          <div class="w-price-card">
+            <div class="w-plan-tag">Advanced Plan</div>
+            <div class="w-price">$495<span>/month</span></div>
+            <p class="w-plan-desc">Professionals looking for advanced tools and insights</p>
+            <div class="w-plan-feat-title">Features:</div>
+            <ul class="w-plan-list">
+              <li>Everything in Intermediate</li>
+              <li>Dedicated account manager</li>
+              <li>Institutional analytics tools</li>
+            </ul>
+            <button class="w-btn-outline" type="button" data-open-login>Choose Advanced</button>
+          </div>
+        </div>
+      </section>
+
+      <footer class="w-footer">
+        &copy; 2026 Nova X Coin Admin. Secure &amp; Decentralized Blockchain Platform.
+      </footer>
+    </div>
+  </div>
+
+  <!-- ================= ADMIN LOGIN MODAL ================= -->
+  <div class="login-gate" id="adminLoginGate" hidden>
+    <div class="login-card">
+      <button class="login-close" id="closeLoginGate" type="button" aria-label="Close">&times;</button>
+      <h1>Nova X Coin Admin</h1>
+      <p>Enter your admin password to manage users, balances, withdrawals, trades, and support.</p>
+      <form id="adminLoginForm" novalidate>
+        <div class="field">
+          <label>Admin Password</label>
+          <input id="adminPass" type="password" placeholder="Enter admin password" />
+        </div>
+        <button class="btn full" type="submit">Unlock Admin Panel</button>
+        <p id="adminLoginMsg" style="color:#ff6474; font-size:0.82rem; min-height:18px; margin:10px 0 0;"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= ADMIN DASHBOARD ================= -->
+  <div class="shell" id="adminApp" hidden>
+    <header class="topbar">
+      <div class="brand">
+        <div class="badge">◈</div>
+        <div>Nova X Coin Admin</div>
+      </div>
+      <div class="actions-row">
+        <span class="conn-pill" id="connStatus">Checking...</span>
+        <button class="btn soft sm" id="adminLogoutBtn" type="button">Log Out</button>
+      </div>
+    </header>
+
+    <div class="stats-grid">
+      <div class="stat-card"><span>Registered Users</span><strong id="statUsers">0</strong></div>
+      <div class="stat-card"><span>Pending Withdrawals</span><strong id="statPendingWd" style="color:var(--amber)">0</strong></div>
+      <div class="stat-card"><span>Active Trades</span><strong id="statActiveTrades" style="color:var(--purple)">0</strong></div>
+      <div class="stat-card"><span>Support Threads</span><strong id="statSupport" style="color:var(--green)">0</strong></div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="withdrawalsTab" type="button">Withdrawals</button>
+      <button class="tab-btn" data-tab="usersTab" type="button">Users &amp; Balance</button>
+      <button class="tab-btn" data-tab="tradesTab" type="button">Trades &amp; Profit</button>
+      <button class="tab-btn" data-tab="addressesTab" type="button">Deposit Addresses</button>
+      <button class="tab-btn" data-tab="supportTab" type="button">Customer Support</button>
+    </div>
+
+    <section class="panel admin-tab" id="withdrawalsTab">
+      <div class="panel-head">
+        <h2>Withdrawal Requests</h2>
+        <select id="wdFilter" style="padding:8px 12px; border-radius:10px; border:1px solid var(--line); background:#162238; color:#fff;">
+          <option value="all">All Status</option>
+          <option value="Pending">Pending Only</option>
+          <option value="Success">Success Only</option>
+          <option value="Rejected">Rejected Only</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Network</th>
+              <th>Wallet Address</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="wdTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel admin-tab" id="usersTab" hidden>
+      <div class="panel-head">
+        <h2>Users &amp; Balance Control</h2>
+        <input id="userSearch" type="search" placeholder="Search name or email..." style="padding:9px 12px; border-radius:10px; border:1px solid var(--line); background:rgba(255,255,255,0.03); color:#fff; width:min(100%, 260px);" />
+      </div>
+
+      <div class="quick-bal-box">
+        <div class="field">
+          <label>Select User</label>
+          <select id="balUserSelect"></select>
+        </div>
+        <div class="field">
+          <label>Amount (USD)</label>
+          <input id="balQuickAmount" type="number" step="0.01" placeholder="Enter USD amount" />
+        </div>
+        <div class="actions-row">
+          <button class="btn green" id="quickAddBalBtn" type="button">+ Add</button>
+          <button class="btn red" id="quickDeductBalBtn" type="button">- Deduct</button>
+          <button class="btn soft" id="quickSetBalBtn" type="button">Set</button>
+        </div>
+      </div>
+      <p id="quickBalMsg" style="color:var(--green); font-size:0.84rem; min-height:18px; margin:-8px 0 14px;"></p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Phone / Country</th>
+              <th>USD Balance</th>
+              <th>Status</th>
+              <th>Quick Actions</th>
+            </tr>
+          </thead>
+          <tbody id="usersTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel admin-tab" id="tradesTab" hidden>
+      <div class="grid-2" style="margin-bottom:16px;">
+        <div class="panel" style="margin:0;">
+          <h2 style="margin-bottom:12px;">Global Trade Outcome Mode</h2>
+          <div class="field">
+            <label>Result Mode for Auto Trades</label>
+            <select id="tradeModeSelect">
+              <option value="win">Always Win (Credit Configured Profit %)</option>
+              <option value="loss">Always Loss (Deduct Trade Stake)</option>
+              <option value="market">Live Market Price (Entry vs Exit)</option>
+            </select>
+          </div>
+          <button class="btn" id="saveTradeModeBtn" type="button">Save Trade Mode</button>
+          <p id="tradeModeMsg" style="color:var(--green); font-size:0.82rem; min-height:18px; margin:8px 0 0;"></p>
+        </div>
+
+        <div class="panel" style="margin:0;">
+          <h2 style="margin-bottom:12px;">Duration Profit Tiers (%)</h2>
+          <div class="tier-grid">
+            <div class="field"><label>60s (%)</label><input id="tier60" type="number" step="0.1" value="17" /></div>
+            <div class="field"><label>90s (%)</label><input id="tier90" type="number" step="0.1" value="21" /></div>
+            <div class="field"><label>180s (%)</label><input id="tier180" type="number" step="0.1" value="23" /></div>
+            <div class="field"><label>300s (%)</label><input id="tier300" type="number" step="0.1" value="27" /></div>
+            <div class="field"><label>800s (%)</label><input id="tier800" type="number" step="0.1" value="31" /></div>
+          </div>
+          <button class="btn" id="saveTiersBtn" type="button">Update Profit Tiers</button>
+          <p id="tiersMsg" style="color:var(--green); font-size:0.82rem; min-height:18px; margin:8px 0 0;"></p>
+        </div>
+      </div>
+
+      <div class="panel" style="margin:0;">
+        <div class="panel-head">
+          <h2>Live &amp; Recent Trades</h2>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Pair / Side</th>
+                <th>Amount</th>
+                <th>Duration / Profit</th>
+                <th>Live Timer / State</th>
+                <th>Control</th>
+              </tr>
+            </thead>
+            <tbody id="tradesTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel admin-tab" id="addressesTab" hidden>
+      <h2 style="margin-bottom:14px;">Manage Deposit Addresses</h2>
+      <div class="field">
+        <label>TRC 20 Deposit Address</label>
+        <input id="addrTRC20" type="text" value="TU3SSNhWEm4v77GKQJPgEsPm3CBWDwpYvf" />
+      </div>
+      <div class="field">
+        <label>ETH Deposit Address</label>
+        <input id="addrETH" type="text" value="0x8337cdd7cfa79e2bb772a48468be0437c0b13409" />
+      </div>
+      <div class="field">
+        <label>BTC Deposit Address</label>
+        <input id="addrBTC" type="text" value="15JQbPeNoZHCgLLBvEG59e9gzVgnjAsVPy" />
+      </div>
+      <button class="btn" id="saveAddressesBtn" type="button">Save Deposit Addresses</button>
+      <p id="addrSaveMsg" style="color:var(--green); font-size:0.84rem; min-height:18px; margin:10px 0 0;"></p>
+    </section>
+
+    <section class="panel admin-tab" id="supportTab" hidden>
+      <h2 style="margin-bottom:14px;">Customer Support Messages</h2>
+      <div class="support-layout">
+        <div class="chat-list" id="adminChatList"></div>
+        <div class="chat-box">
+          <div class="chat-messages" id="adminChatMessages">
+            <p style="color:var(--muted);">Select a user thread from the left to view messages &amp; photos.</p>
+          </div>
+          <form class="chat-input-row" id="adminChatForm">
+            <input type="file" id="adminPhotoInput" accept="image/*" hidden />
+            <button class="btn soft sm" id="adminAttachBtn" type="button">Photo</button>
+            <input id="adminChatInput" type="text" placeholder="Reply to user..." autocomplete="off" />
+            <button class="btn sm" type="submit">Send</button>
+          </form>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="lightbox" id="adminLightbox" hidden>
+    <img id="adminLightboxImg" src="" alt="Preview" />
+  </div>
+
+  <script>
+    (function () {
+      /* =========================================================
+         FIREBASE CONFIG (MUST MATCH index.html)
+      ========================================================= */
+      const firebaseConfig = {
+        apiKey: "AIzaSyD_AfRS4PC8pgPWys4YeDQcQgQHT_-TfAY",
+        authDomain: "nova-x-coin.firebaseapp.com",
+        databaseURL: "https://nova-x-coin-default-rtdb.firebaseio.com",
+        projectId: "nova-x-coin",
+        storageBucket: "nova-x-coin.firebasestorage.app",
+        messagingSenderId: "201913792068",
+        appId: "1:201913792068:web:076697a164de9b3b38ae11"
+      };
+
+      const ADMIN_PASS = 'admin@*112213@';
+
+      const USE_FIREBASE = Boolean(
+        typeof firebase !== 'undefined' &&
+        firebaseConfig.databaseURL &&
+        !firebaseConfig.databaseURL.includes('YOUR_')
+      );
+
+      let rtdb = null;
+      if (USE_FIREBASE) {
+        try {
+          if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+          }
+          rtdb = firebase.database();
+        } catch (e) {
+          rtdb = null;
+        }
+      }
+
+      const STORAGE_KEY = 'orbit_crypto_users_v1';
+      const WITHDRAWALS_KEY = 'orbit_crypto_withdrawals_v1';
+      const TRADES_KEY = 'orbit_crypto_trades_v1';
+      const SUPPORT_KEY = 'orbit_crypto_support_v1';
+      const CONFIG_KEY = 'orbit_crypto_config_v1';
+      const ADMIN_SESSION_KEY = 'orbit_admin_logged_in';
+      const ADMIN_SESSION_TTL = 24 * 60 * 60 * 1000;
+
+      function toDbKey(email) {
+        return String(email || '').trim().toLowerCase().replace(/\./g, '_dot_').replace(/[#$\[\]\/]/g, '_');
+      }
+
+      function loadJSON(key, fb) {
+        try { const r = localStorage.getItem(key); return r ? JSON.parse(r) : fb; } catch (e) { return fb; }
+      }
+      function saveJSON(key, val) {
+        try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {}
+      }
+
+      let usersMap = {};
+      let withdrawalsList = [];
+      let tradesList = [];
+      let supportMap = {};
+      let selectedChatKey = null;
+      let listenersStarted = false;
+      let lastLocalSnapshot = '';
+
+      const connStatus = document.getElementById('connStatus');
+      if (rtdb) {
+        connStatus.textContent = '● Connecting to Firebase...';
+        rtdb.ref('.info/connected').on('value', (snap) => {
+          if (snap.val() === true) {
+            connStatus.textContent = '● Firebase Connected';
+            connStatus.classList.remove('local', 'err');
+          } else {
+            connStatus.textContent = '● Firebase Reconnecting...';
+            connStatus.classList.remove('err');
+            connStatus.classList.add('local');
+          }
+        });
+      } else {
+        connStatus.textContent = '● Local Browser Mode';
+        connStatus.classList.add('local');
+      }
+
+      const welcomePage = document.getElementById('welcomePage');
+      const gate = document.getElementById('adminLoginGate');
+      const app = document.getElementById('adminApp');
+
+      document.querySelectorAll('[data-open-login]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          gate.hidden = false;
+          document.getElementById('adminPass').focus();
+        });
+      });
+
+      document.getElementById('closeLoginGate').addEventListener('click', () => {
+        gate.hidden = true;
+        document.getElementById('adminLoginMsg').textContent = '';
+      });
+
+      gate.addEventListener('click', (e) => {
+        if (e.target === gate) {
+          gate.hidden = true;
+        }
+      });
+
+      function unlockAdmin() {
+        welcomePage.hidden = true;
+        gate.hidden = true;
+        app.hidden = false;
+        if (!listenersStarted) {
+          listenersStarted = true;
+          initListeners();
+        }
+      }
+
+      document.getElementById('adminLoginForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const pw = document.getElementById('adminPass').value.trim();
+        if (pw === ADMIN_PASS) {
+          try {
+            localStorage.setItem(
+              ADMIN_SESSION_KEY,
+              JSON.stringify({ expiresAt: Date.now() + ADMIN_SESSION_TTL })
+            );
+          } catch (err) {}
+          document.getElementById('adminLoginMsg').textContent = '';
+          unlockAdmin();
+        } else {
+          document.getElementById('adminLoginMsg').textContent = 'Incorrect admin password.';
+        }
+      });
+
+      document.getElementById('adminLogoutBtn').addEventListener('click', () => {
+        try { localStorage.removeItem(ADMIN_SESSION_KEY); } catch (e) {}
+        location.reload();
+      });
+
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          document.querySelectorAll('.admin-tab').forEach(tab => {
+            tab.hidden = tab.id !== btn.dataset.tab;
+          });
+        });
+      });
+
+      function formatUSD(v) {
+        return '$' + Number(v || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      }
+
+      function formatCountdown(totalSeconds) {
+        const sec = Math.max(0, Math.floor(totalSeconds));
+        const m = Math.floor(sec / 60);
+        const s = sec % 60;
+        return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+      }
+
+      function renderStats() {
+        document.getElementById('statUsers').textContent = Object.keys(usersMap).length;
+        document.getElementById('statPendingWd').textContent = withdrawalsList.filter(w => w.status === 'Pending').length;
+        document.getElementById('statActiveTrades').textContent = tradesList.filter(t => !t.settled).length;
+        document.getElementById('statSupport').textContent = Object.keys(supportMap).length;
+      }
+
+      function renderWithdrawals() {
+        const filter = document.getElementById('wdFilter').value;
+        const tbody = document.getElementById('wdTableBody');
+        const rows = withdrawalsList.filter(w => filter === 'all' || w.status === filter);
+
+        if (rows.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" style="color:var(--muted);">No withdrawal requests found.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = rows.map(w => {
+          const wKey = w.dbKey || w.id;
+          const stCls = (w.status || 'Pending').toLowerCase();
+          const isPending = w.status === 'Pending';
+          return (
+            '<tr>' +
+              '<td><strong>' + (w.userName || 'User') + '</strong><br><small style="color:var(--muted);">' + (w.email || '') + '</small></td>' +
+              '<td>' + w.network + '</td>' +
+              '<td class="mono">' + w.address + '</td>' +
+              '<td><strong>' + formatUSD(w.amount) + '</strong></td>' +
+              '<td><span class="pill ' + stCls + '">' + w.status + '</span></td>' +
+              '<td>' +
+                (isPending
+                  ? '<div class="actions-row">' +
+                      '<button class="btn green sm" data-wd-approve="' + wKey + '">Approve</button>' +
+                      '<button class="btn red sm" data-wd-reject="' + wKey + '">Reject</button>' +
+                    '</div>'
+                  : '<span style="color:var(--muted); font-size:0.78rem;">Processed</span>') +
+              '</td>' +
+            '</tr>'
+          );
+        }).join('');
+
+        tbody.querySelectorAll('[data-wd-approve]').forEach(btn => {
+          btn.addEventListener('click', () => handleWithdrawalAction(btn.dataset.wdApprove, 'Success'));
+        });
+        tbody.querySelectorAll('[data-wd-reject]').forEach(btn => {
+          btn.addEventListener('click', () => handleWithdrawalAction(btn.dataset.wdReject, 'Rejected'));
+        });
+      }
+
+      function handleWithdrawalAction(wdKey, newStatus) {
+        const w = withdrawalsList.find(item => (item.dbKey || item.id) === wdKey || item.id === wdKey);
+        if (!w || w.status !== 'Pending') return;
+        w.status = newStatus;
+
+        const refKey = w.dbKey || w.id;
+        const uKey = w.emailKey || toDbKey(w.email);
+
+        if (newStatus === 'Rejected' && !w.refunded) {
+          w.refunded = true;
+          const userObj = usersMap[uKey] || usersMap[w.email];
+          if (userObj) {
+            userObj.balance = Number(userObj.balance || 0) + Number(w.amount || 0);
+            if (rtdb) {
+              rtdb.ref('orbit/users/' + uKey + '/balance').set(userObj.balance);
+            }
+          }
+        }
+
+        if (rtdb) {
+          rtdb.ref('orbit/withdrawals/' + refKey).update({ status: newStatus, refunded: Boolean(w.refunded) });
+          if (uKey) {
+            rtdb.ref('orbit/history/' + uKey + '/' + (w.id || refKey) + '/status').set(newStatus);
+          }
+        } else {
+          saveJSON(WITHDRAWALS_KEY, withdrawalsList);
+          const localUsers = loadJSON(STORAGE_KEY, {});
+          if (localUsers[w.email] && newStatus === 'Rejected') {
+            localUsers[w.email].balance = Number(localUsers[w.email].balance || 0) + Number(w.amount || 0);
+            saveJSON(STORAGE_KEY, localUsers);
+          }
+        }
+        renderAll();
+      }
+
+      function populateUserSelectDropdown() {
+        const sel = document.getElementById('balUserSelect');
+        const prevVal = sel.value;
+        const keys = Object.keys(usersMap);
+        if (keys.length === 0) {
+          sel.innerHTML = '<option value="">No users registered yet</option>';
+          return;
+        }
+        sel.innerHTML = keys.map(k => {
+          const u = usersMap[k];
+          return '<option value="' + k + '">' + (u.name || 'User') + ' (' + u.email + ') — ' + formatUSD(u.balance || 0) + '</option>';
+        }).join('');
+        if (prevVal && usersMap[prevVal]) {
+          sel.value = prevVal;
+        }
+      }
+
+      function renderUsers() {
+        populateUserSelectDropdown();
+        const q = document.getElementById('userSearch').value.trim().toLowerCase();
+        const tbody = document.getElementById('usersTableBody');
+        const list = Object.keys(usersMap).map(k => Object.assign({ _key: k }, usersMap[k]))
+          .filter(u => ((u.name || '') + ' ' + (u.email || '')).toLowerCase().includes(q));
+
+        if (list.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" style="color:var(--muted);">No users found. Create an account in index.html first (connected to the same Firebase project).</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = list.map(u => {
+          const stCls = u.blocked ? 'blocked' : 'active';
+          const stText = u.blocked ? 'Blocked' : 'Active';
+          return (
+            '<tr>' +
+              '<td><strong>' + (u.name || 'User') + '</strong><br><small style="color:var(--muted);">' + u.email + '</small></td>' +
+              '<td>' + (u.phone || '—') + '<br><small style="color:var(--muted);">' + (u.country || 'Not set') + '</small></td>' +
+              '<td><strong>' + formatUSD(u.balance || 0) + '</strong></td>' +
+              '<td><span class="pill ' + stCls + '">' + stText + '</span></td>' +
+              '<td>' +
+                '<div class="actions-row">' +
+                  '<button class="btn soft sm" data-select-user="' + u._key + '">Select</button>' +
+                  '<button class="btn ' + (u.blocked ? 'soft' : 'red') + ' sm" data-toggle-block="' + u._key + '">' + (u.blocked ? 'Unblock' : 'Block') + '</button>' +
+                '</div>' +
+              '</td>' +
+            '</tr>'
+          );
+        }).join('');
+
+        tbody.querySelectorAll('[data-select-user]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.getElementById('balUserSelect').value = btn.dataset.selectUser;
+            document.getElementById('balQuickAmount').focus();
+          });
+        });
+        tbody.querySelectorAll('[data-toggle-block]').forEach(btn => {
+          btn.addEventListener('click', () => toggleBlockUser(btn.dataset.toggleBlock));
+        });
+      }
+
+      function applyBalanceChange(mode) {
+        const key = document.getElementById('balUserSelect').value;
+        const inp = document.getElementById('balQuickAmount');
+        const msg = document.getElementById('quickBalMsg');
+        const val = Number(inp.value);
+
+        if (!key || !usersMap[key]) {
+          msg.style.color = '#ff6474';
+          msg.textContent = 'Please select a user first.';
+          return;
+        }
+        if (!Number.isFinite(val) || val < 0 || (mode !== 'set' && val <= 0)) {
+          msg.style.color = '#ff6474';
+          msg.textContent = 'Please enter a valid USD amount.';
+          inp.focus();
+          return;
+        }
+
+        const u = usersMap[key];
+        const current = Number(u.balance || 0);
+        let nextBal = current;
+        if (mode === 'add') nextBal = current + val;
+        else if (mode === 'deduct') nextBal = Math.max(0, current - val);
+        else nextBal = val;
+
+        u.balance = nextBal;
+
+        if (rtdb) {
+          rtdb.ref('orbit/users/' + key + '/balance').set(nextBal);
+          if (mode === 'add' && val > 0) {
+            const hid = 'DEP-' + Date.now();
+            rtdb.ref('orbit/history/' + key + '/' + hid).set({
+              title: 'Deposit Credited',
+              amount: '+' + formatUSD(val),
+              time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              type: 'up',
+              status: 'Success',
+              createdAt: Date.now()
+            });
+          }
+        } else {
+          const localUsers = loadJSON(STORAGE_KEY, {});
+          if (localUsers[u.email]) {
+            localUsers[u.email].balance = nextBal;
+            saveJSON(STORAGE_KEY, localUsers);
+          }
+        }
+
+        inp.value = '';
+        msg.style.color = '#32d29b';
+        msg.textContent = 'Updated ' + (u.name || u.email) + ' balance to ' + formatUSD(nextBal) + '.';
+        setTimeout(() => { msg.textContent = ''; }, 3000);
+        renderAll();
+      }
+
+      document.getElementById('quickAddBalBtn').addEventListener('click', () => applyBalanceChange('add'));
+      document.getElementById('quickDeductBalBtn').addEventListener('click', () => applyBalanceChange('deduct'));
+      document.getElementById('quickSetBalBtn').addEventListener('click', () => applyBalanceChange('set'));
+
+      function toggleBlockUser(key) {
+        const u = usersMap[key];
+        if (!u) return;
+        u.blocked = !u.blocked;
+        if (rtdb) {
+          rtdb.ref('orbit/users/' + key + '/blocked').set(u.blocked);
+        } else {
+          const localUsers = loadJSON(STORAGE_KEY, {});
+          if (localUsers[u.email]) {
+            localUsers[u.email].blocked = u.blocked;
+            saveJSON(STORAGE_KEY, localUsers);
+          }
+        }
+        renderAll();
+      }
+
+      function renderTrades() {
+        const tbody = document.getElementById('tradesTableBody');
+        if (tradesList.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" style="color:var(--muted);">No trades recorded yet.</td></tr>';
+          return;
+        }
+        const nowMs = Date.now();
+        tbody.innerHTML = tradesList.map(t => {
+          const tKey = t.dbKey || t.id;
+          const rem = t.settled ? 0 : (t.endsAt ? Math.max(0, Math.ceil((t.endsAt - nowMs) / 1000)) : (t.remaining || 0));
+          const stText = t.settled ? (t.result === 'loss' ? 'Loss' : 'Won') : ('⏱ ' + formatCountdown(rem));
+          const stCls = t.settled ? (t.result === 'loss' ? 'loss' : 'win') : 'pending';
+          return (
+            '<tr>' +
+              '<td><strong>' + (t.userName || 'User') + '</strong><br><small style="color:var(--muted);">' + (t.email || '') + '</small></td>' +
+              '<td>' + t.symbol + '/USD (' + (t.side || '').toUpperCase() + ')</td>' +
+              '<td>' + formatUSD(t.amount) + '</td>' +
+              '<td>' + t.duration + 's (+' + t.profitPct + '%)</td>' +
+              '<td><span class="pill ' + stCls + '" data-trade-timer="' + tKey + '">' + stText + '</span></td>' +
+              '<td>' +
+                (!t.settled
+                  ? '<div class="actions-row">' +
+                      '<button class="btn green sm" data-trade-win="' + tKey + '">Force Win</button>' +
+                      '<button class="btn red sm" data-trade-loss="' + tKey + '">Force Loss</button>' +
+                    '</div>'
+                  : '<span style="color:var(--muted); font-size:0.78rem;">Settled</span>') +
+              '</td>' +
+            '</tr>'
+          );
+        }).join('');
+
+        tbody.querySelectorAll('[data-trade-win]').forEach(b => {
+          b.addEventListener('click', () => setTradeOutcome(b.dataset.tradeWin, 'win'));
+        });
+        tbody.querySelectorAll('[data-trade-loss]').forEach(b => {
+          b.addEventListener('click', () => setTradeOutcome(b.dataset.tradeLoss, 'loss'));
+        });
+      }
+
+      function tickAdminTimers() {
+        const nowMs = Date.now();
+        tradesList.forEach(t => {
+          if (t.settled) return;
+          const tKey = t.dbKey || t.id;
+          const el = document.querySelector('[data-trade-timer="' + tKey + '"]');
+          if (!el) return;
+          const rem = t.endsAt ? Math.max(0, Math.ceil((t.endsAt - nowMs) / 1000)) : 0;
+          el.textContent = rem > 0 ? ('⏱ ' + formatCountdown(rem)) : 'Settling...';
+        });
+      }
+
+      function setTradeOutcome(key, outcome) {
+        if (rtdb) {
+          rtdb.ref('orbit/trades/' + key + '/outcome').set(outcome);
+        } else {
+          const localTrades = loadJSON(TRADES_KEY, []);
+          const idx = localTrades.findIndex(t => String(t.id) === String(key) || t.dbKey === key);
+          if (idx >= 0) {
+            localTrades[idx].outcome = outcome;
+            saveJSON(TRADES_KEY, localTrades);
+          }
+        }
+        renderTrades();
+      }
+
+      function saveConfigPartial(partial, msgEl, msgText) {
+        if (rtdb) {
+          rtdb.ref('orbit/config').update(partial);
+        } else {
+          const cfg = loadJSON(CONFIG_KEY, {});
+          Object.assign(cfg, partial);
+          saveJSON(CONFIG_KEY, cfg);
+        }
+        msgEl.textContent = msgText;
+        setTimeout(() => { msgEl.textContent = ''; }, 2500);
+      }
+
+      document.getElementById('saveTradeModeBtn').addEventListener('click', () => {
+        saveConfigPartial(
+          { tradeMode: document.getElementById('tradeModeSelect').value },
+          document.getElementById('tradeModeMsg'),
+          'Trade mode saved.'
+        );
+      });
+
+      document.getElementById('saveTiersBtn').addEventListener('click', () => {
+        const tiers = {
+          60: Number(document.getElementById('tier60').value) || 17,
+          90: Number(document.getElementById('tier90').value) || 21,
+          180: Number(document.getElementById('tier180').value) || 23,
+          300: Number(document.getElementById('tier300').value) || 27,
+          800: Number(document.getElementById('tier800').value) || 31
+        };
+        saveConfigPartial({ tradeTiers: tiers }, document.getElementById('tiersMsg'), 'Profit tiers updated.');
+      });
+
+      document.getElementById('saveAddressesBtn').addEventListener('click', () => {
+        const depositAddresses = {
+          'TRC 20': document.getElementById('addrTRC20').value.trim(),
+          'ETH': document.getElementById('addrETH').value.trim(),
+          'BTC': document.getElementById('addrBTC').value.trim()
+        };
+        saveConfigPartial({ depositAddresses: depositAddresses }, document.getElementById('addrSaveMsg'), 'Deposit addresses updated.');
+      });
+
+      function renderSupportThreads() {
+        const listEl = document.getElementById('adminChatList');
+        const keys = Object.keys(supportMap).sort((a, b) => (supportMap[b].updatedAt || 0) - (supportMap[a].updatedAt || 0));
+
+        if (keys.length === 0) {
+          listEl.innerHTML = '<p style="padding:14px; color:var(--muted); font-size:0.84rem;">No support chats yet.</p>';
+          return;
+        }
+
+        if (!selectedChatKey || !supportMap[selectedChatKey]) {
+          selectedChatKey = keys[0];
+        }
+
+        listEl.innerHTML = keys.map(k => {
+          const c = supportMap[k];
+          return (
+            '<button class="chat-thread-btn' + (k === selectedChatKey ? ' active' : '') + '" data-chat-key="' + k + '" type="button">' +
+              '<strong>' + (c.userName || 'User') + '</strong>' +
+              '<small>' + (c.email || k) + '</small>' +
+            '</button>'
+          );
+        }).join('');
+
+        listEl.querySelectorAll('[data-chat-key]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            selectedChatKey = btn.dataset.chatKey;
+            renderSupportThreads();
+            renderSelectedChatMessages();
+          });
+        });
+
+        renderSelectedChatMessages();
+      }
+
+      function renderSelectedChatMessages() {
+        const box = document.getElementById('adminChatMessages');
+        if (!selectedChatKey || !supportMap[selectedChatKey]) {
+          box.innerHTML = '<p style="color:var(--muted);">Select a chat thread to view messages.</p>';
+          return;
+        }
+        const rawMsgs = supportMap[selectedChatKey].messages || {};
+        const msgs = Array.isArray(rawMsgs)
+          ? rawMsgs
+          : Object.keys(rawMsgs).map(k => rawMsgs[k]).sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+
+        box.innerHTML = '';
+        msgs.forEach(m => {
+          const div = document.createElement('div');
+          div.className = 'msg ' + (m.sender === 'agent' ? 'agent' : 'user');
+          if (m.photoUrl) {
+            const img = document.createElement('img');
+            img.src = m.photoUrl;
+            img.addEventListener('click', () => {
+              document.getElementById('adminLightboxImg').src = m.photoUrl;
+              document.getElementById('adminLightbox').hidden = false;
+            });
+            div.appendChild(img);
+          }
+          if (m.text) {
+            const p = document.createElement('div');
+            p.textContent = m.text;
+            div.appendChild(p);
+          }
+          const t = document.createElement('small');
+          t.textContent = m.time || '';
+          div.appendChild(t);
+          box.appendChild(div);
+        });
+        box.scrollTop = box.scrollHeight;
+      }
+
+      document.getElementById('adminLightbox').addEventListener('click', () => {
+        document.getElementById('adminLightbox').hidden = true;
+      });
+
+      function sendAdminReply(text, photoUrl) {
+        if (!selectedChatKey) return;
+        const msgObj = {
+          sender: 'agent',
+          text: text || '',
+          photoUrl: photoUrl || '',
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          createdAt: Date.now()
+        };
+
+        if (rtdb) {
+          rtdb.ref('orbit/support/' + selectedChatKey + '/messages').push(msgObj);
+          rtdb.ref('orbit/support/' + selectedChatKey + '/updatedAt').set(Date.now());
+        } else {
+          const allChats = loadJSON(SUPPORT_KEY, {});
+          if (allChats[selectedChatKey]) {
+            allChats[selectedChatKey].messages.push(msgObj);
+            allChats[selectedChatKey].updatedAt = Date.now();
+            saveJSON(SUPPORT_KEY, allChats);
+            supportMap = allChats;
+            renderSelectedChatMessages();
+          }
+        }
+      }
+
+      document.getElementById('adminChatForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const inp = document.getElementById('adminChatInput');
+        const txt = inp.value.trim();
+        if (!txt) return;
+        sendAdminReply(txt, '');
+        inp.value = '';
+      });
+
+      document.getElementById('adminAttachBtn').addEventListener('click', () => {
+        document.getElementById('adminPhotoInput').click();
+      });
+
+      document.getElementById('adminPhotoInput').addEventListener('change', () => {
+        const file = document.getElementById('adminPhotoInput').files[0];
+        if (!file || !file.type.startsWith('image/')) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const scale = Math.min(1, 720 / Math.max(img.width, img.height));
+            canvas.width = Math.round(img.width * scale);
+            canvas.height = Math.round(img.height * scale);
+            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+            sendAdminReply('', canvas.toDataURL('image/jpeg', 0.8));
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+        document.getElementById('adminPhotoInput').value = '';
+      });
+
+      document.getElementById('wdFilter').addEventListener('change', renderWithdrawals);
+      document.getElementById('userSearch').addEventListener('input', renderUsers);
+
+      function renderAll() {
+        renderStats();
+        renderWithdrawals();
+        renderUsers();
+        renderTrades();
+        renderSupportThreads();
+      }
+
+      function applyConfigInputs(cfg) {
+        if (!cfg) return;
+        if (cfg.tradeMode) document.getElementById('tradeModeSelect').value = cfg.tradeMode;
+        if (cfg.tradeTiers) {
+          [60, 90, 180, 300, 800].forEach(s => {
+            if (cfg.tradeTiers[s] !== undefined) document.getElementById('tier' + s).value = cfg.tradeTiers[s];
+          });
+        }
+        if (cfg.depositAddresses) {
+          if (cfg.depositAddresses['TRC 20']) document.getElementById('addrTRC20').value = cfg.depositAddresses['TRC 20'];
+          if (cfg.depositAddresses['ETH']) document.getElementById('addrETH').value = cfg.depositAddresses['ETH'];
+          if (cfg.depositAddresses['BTC']) document.getElementById('addrBTC').value = cfg.depositAddresses['BTC'];
+        }
+      }
+
+      function loadLocalAll() {
+        const u = loadJSON(STORAGE_KEY, {});
+        const w = loadJSON(WITHDRAWALS_KEY, []);
+        const t = loadJSON(TRADES_KEY, []);
+        const s = loadJSON(SUPPORT_KEY, {});
+        const c = loadJSON(CONFIG_KEY, null);
+
+        const snap = JSON.stringify({ u, w, t, s, c });
+        if (snap === lastLocalSnapshot) return;
+        lastLocalSnapshot = snap;
+
+        usersMap = u;
+        withdrawalsList = w;
+        tradesList = t;
+        supportMap = s;
+        applyConfigInputs(c);
+        renderAll();
+      }
+
+      function onDbError(err) {
+        console.error('Firebase error:', err);
+        connStatus.textContent = '● Firebase Rule Blocked';
+        connStatus.classList.remove('local');
+        connStatus.classList.add('err');
+      }
+
+      function initListeners() {
+        if (rtdb) {
+          rtdb.ref('orbit/users').on('value', (snap) => {
+            usersMap = snap.val() || {};
+            renderAll();
+          }, onDbError);
+          rtdb.ref('orbit/withdrawals').on('value', (snap) => {
+            const v = snap.val() || {};
+            withdrawalsList = Object.keys(v)
+              .map(k => Object.assign({ dbKey: k, id: (v[k] && v[k].id) || k }, v[k]))
+              .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+            renderAll();
+          }, onDbError);
+          rtdb.ref('orbit/trades').on('value', (snap) => {
+            const v = snap.val() || {};
+            tradesList = Object.keys(v)
+              .map(k => Object.assign({ dbKey: k }, v[k]))
+              .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+            renderAll();
+          }, onDbError);
+          rtdb.ref('orbit/support').on('value', (snap) => {
+            supportMap = snap.val() || {};
+            renderAll();
+          }, onDbError);
+          rtdb.ref('orbit/config').on('value', (snap) => {
+            applyConfigInputs(snap.val());
+          }, onDbError);
+        } else {
+          loadLocalAll();
+          window.addEventListener('storage', loadLocalAll);
+          setInterval(loadLocalAll, 1500);
+        }
+        setInterval(tickAdminTimers, 1000);
+      }
+
+      try {
+        const rawSession = localStorage.getItem(ADMIN_SESSION_KEY);
+        if (rawSession) {
+          const session = JSON.parse(rawSession);
+          if (session && session.expiresAt && Date.now() < session.expiresAt) {
+            unlockAdmin();
+          } else {
+            localStorage.removeItem(ADMIN_SESSION_KEY);
+          }
+        }
+      } catch (e) {}
+    })();
+  </script>
+</body>
+</html>
