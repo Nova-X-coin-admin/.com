@@ -307,6 +307,7 @@
     .btn.red{background:linear-gradient(135deg,#ff6474,#d93b4d)}
     .btn.soft{background:rgba(255,255,255,0.07); border:1px solid var(--line)}
     .btn.sm{padding:7px 11px; font-size:0.76rem; border-radius:9px}
+    .btn.selected-ctrl{outline:2px solid #fff; box-shadow:0 0 14px rgba(255,255,255,0.28)}
 
     .shell{
       width:min(1260px, calc(100% - 24px)); margin:0 auto; padding:20px 0 50px;
@@ -829,6 +830,7 @@
       <div class="panel" style="margin:0;">
         <div class="panel-head">
           <h2>Live &amp; Recent Trades</h2>
+          <small style="color:var(--muted);">Click Force Win or Force Loss while a trade timer is running to control the live result.</small>
         </div>
         <div class="table-wrap">
           <table>
@@ -839,7 +841,7 @@
                 <th>Amount</th>
                 <th>Duration / Profit</th>
                 <th>Live Timer / State</th>
-                <th>Control</th>
+                <th>Live Control</th>
               </tr>
             </thead>
             <tbody id="tradesTableBody"></tbody>
@@ -1045,10 +1047,22 @@
       }
 
       function renderStats() {
+        const activeCount = tradesList.filter(t => !t.settled).length;
+        const pendingWdCount = withdrawalsList.filter(w => w.status === 'Pending').length;
+
         document.getElementById('statUsers').textContent = Object.keys(usersMap).length;
-        document.getElementById('statPendingWd').textContent = withdrawalsList.filter(w => w.status === 'Pending').length;
-        document.getElementById('statActiveTrades').textContent = tradesList.filter(t => !t.settled).length;
+        document.getElementById('statPendingWd').textContent = pendingWdCount;
+        document.getElementById('statActiveTrades').textContent = activeCount;
         document.getElementById('statSupport').textContent = Object.keys(supportMap).length;
+
+        const tradesTabBtn = document.querySelector('.tab-btn[data-tab="tradesTab"]');
+        if (tradesTabBtn) {
+          tradesTabBtn.textContent = activeCount > 0 ? ('Trades & Profit (' + activeCount + ' LIVE)') : 'Trades & Profit';
+        }
+        const wdTabBtn = document.querySelector('.tab-btn[data-tab="withdrawalsTab"]');
+        if (wdTabBtn) {
+          wdTabBtn.textContent = pendingWdCount > 0 ? ('Withdrawals (' + pendingWdCount + ')') : 'Withdrawals';
+        }
       }
 
       function renderWithdrawals() {
@@ -1273,6 +1287,13 @@
           const rem = t.settled ? 0 : (t.endsAt ? Math.max(0, Math.ceil((t.endsAt - nowMs) / 1000)) : (t.remaining || 0));
           const stText = t.settled ? (t.result === 'loss' ? 'Loss' : 'Won') : ('⏱ ' + formatCountdown(rem));
           const stCls = t.settled ? (t.result === 'loss' ? 'loss' : 'win') : 'pending';
+          const currentOutcome = (t.outcome && t.outcome !== 'auto') ? t.outcome : 'auto';
+          const outcomeBadge = currentOutcome === 'win'
+            ? '<span class="pill win">Set: WIN</span>'
+            : (currentOutcome === 'loss'
+              ? '<span class="pill loss">Set: LOSS</span>'
+              : '<span class="pill pending">Auto</span>');
+
           return (
             '<tr>' +
               '<td><strong>' + (t.userName || 'User') + '</strong><br><small style="color:var(--muted);">' + (t.email || '') + '</small></td>' +
@@ -1283,10 +1304,12 @@
               '<td>' +
                 (!t.settled
                   ? '<div class="actions-row">' +
-                      '<button class="btn green sm" data-trade-win="' + tKey + '">Force Win</button>' +
-                      '<button class="btn red sm" data-trade-loss="' + tKey + '">Force Loss</button>' +
+                      outcomeBadge +
+                      '<button class="btn green sm' + (currentOutcome === 'win' ? ' selected-ctrl' : '') + '" data-trade-win="' + tKey + '">' + (currentOutcome === 'win' ? '✓ Win' : 'Force Win') + '</button>' +
+                      '<button class="btn red sm' + (currentOutcome === 'loss' ? ' selected-ctrl' : '') + '" data-trade-loss="' + tKey + '">' + (currentOutcome === 'loss' ? '✓ Loss' : 'Force Loss') + '</button>' +
+                      (currentOutcome !== 'auto' ? '<button class="btn soft sm" data-trade-auto="' + tKey + '">Auto</button>' : '') +
                     '</div>'
-                  : '<span style="color:var(--muted); font-size:0.78rem;">Settled</span>') +
+                  : '<span style="color:var(--muted); font-size:0.78rem;">Settled (' + (t.result === 'loss' ? 'Loss' : 'Won') + ')</span>') +
               '</td>' +
             '</tr>'
           );
@@ -1297,6 +1320,9 @@
         });
         tbody.querySelectorAll('[data-trade-loss]').forEach(b => {
           b.addEventListener('click', () => setTradeOutcome(b.dataset.tradeLoss, 'loss'));
+        });
+        tbody.querySelectorAll('[data-trade-auto]').forEach(b => {
+          b.addEventListener('click', () => setTradeOutcome(b.dataset.tradeAuto, 'auto'));
         });
       }
 
@@ -1313,6 +1339,8 @@
       }
 
       function setTradeOutcome(key, outcome) {
+        const target = tradesList.find(t => String(t.dbKey || t.id) === String(key));
+        if (target) target.outcome = outcome;
         if (rtdb) {
           rtdb.ref('orbit/trades/' + key + '/outcome').set(outcome);
         } else {
